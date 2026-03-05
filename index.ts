@@ -42,6 +42,8 @@ type Mem0Config = {
   };
   // Shared
   userId: string;
+  baseUrl?: string;
+  requestTimeoutMs: number;
   autoCapture: boolean;
   autoRecall: boolean;
   searchThreshold: number;
@@ -111,6 +113,117 @@ interface Mem0Provider {
   get(memoryId: string): Promise<MemoryItem>;
   getAll(options: ListOptions): Promise<MemoryItem[]>;
   delete(memoryId: string): Promise<void>;
+}
+
+
+// ============================================================================
+// Foxmemory HTTP Provider (self-hosted API)
+// ============================================================================
+
+class FoxmemoryHttpProvider implements Mem0Provider {
+  constructor(
+    private readonly baseUrl: string,
+    private readonly timeoutMs: number,
+  ) {}
+
+  private async post(path: string, body: unknown): Promise<any> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      const res = await fetch(`${this.baseUrl}${path}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      const text = await res.text();
+      let json: any = null;
+      try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${path}: ${json?.error?.message || json?.error || text}`);
+      return json;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private async getJson(path: string): Promise<any> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      const res = await fetch(`${this.baseUrl}${path}`, { signal: controller.signal });
+      const text = await res.text();
+      let json: any = null;
+      try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${path}: ${json?.error?.message || json?.error || text}`);
+      return json;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private async deleteJson(path: string): Promise<any> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      const res = await fetch(`${this.baseUrl}${path}`, { method: "DELETE", signal: controller.signal });
+      const text = await res.text();
+      let json: any = null;
+      try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${path}: ${json?.error?.message || json?.error || text}`);
+      return json;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async add(messages: Array<{ role: string; content: string }>, options: AddOptions): Promise<AddResult> {
+    const json = await this.post('/v2/memories', {
+      user_id: options.user_id,
+      run_id: options.run_id,
+      messages,
+      metadata: undefined,
+      infer_preferred: true,
+      fallback_raw: true,
+    });
+    const result = json?.data?.result || json?.result || { results: [] };
+    return normalizeAddResult(result);
+  }
+
+  async search(query: string, options: SearchOptions): Promise<MemoryItem[]> {
+    const json = await this.post('/v2/memories/search', {
+      query,
+      user_id: options.user_id,
+      run_id: options.run_id,
+      top_k: options.top_k ?? options.limit,
+      threshold: options.threshold,
+      keyword_search: options.keyword_search,
+      rerank: options.reranking,
+      source: options.source,
+    });
+    const rows = json?.data?.results || json?.results || [];
+    return normalizeSearchResults(rows);
+  }
+
+  async get(memoryId: string): Promise<MemoryItem> {
+    const json = await this.getJson(`/v2/memories/${encodeURIComponent(memoryId)}`);
+    return normalizeMemoryItem(json?.data || json);
+  }
+
+  async getAll(options: ListOptions): Promise<MemoryItem[]> {
+    const json = await this.post('/v2/memories/list', {
+      filters: {
+        ...(options.user_id ? { user_id: options.user_id } : {}),
+        ...(options.run_id ? { run_id: options.run_id } : {}),
+      },
+      page_size: options.page_size,
+    });
+    const rows = json?.data || [];
+    return Array.isArray(rows) ? rows.map(normalizeMemoryItem) : [];
+  }
+
+  async delete(memoryId: string): Promise<void> {
+    await this.deleteJson(`/v2/memories/${encodeURIComponent(memoryId)}`);
+  }
 }
 
 // ============================================================================
@@ -503,6 +616,8 @@ const ALLOWED_KEYS = [
   "searchThreshold",
   "topK",
   "oss",
+  "baseUrl",
+  "requestTimeoutMs",
 ];
 
 function assertAllowedKeys(
@@ -527,8 +642,9 @@ const mem0ConfigSchema = {
     const mode: Mem0Mode =
       cfg.mode === "oss" || cfg.mode === "open-source" ? "open-source" : "platform";
 
-    // Platform mode requires apiKey
-    if (mode === "platform") {
+    // Platform mode requires apiKey unless using baseUrl (foxmemory HTTP backend)
+    const hasBaseUrl = typeof cfg.baseUrl === "string" && cfg.baseUrl.length > 0;
+    if (mode === "platform" && !hasBaseUrl) {
       if (typeof cfg.apiKey !== "string" || !cfg.apiKey) {
         throw new Error(
           "apiKey is required for platform mode (set mode: \"open-source\" for self-hosted)",
@@ -550,6 +666,8 @@ const mem0ConfigSchema = {
         typeof cfg.apiKey === "string" ? resolveEnvVars(cfg.apiKey) : undefined,
       userId:
         typeof cfg.userId === "string" && cfg.userId ? cfg.userId : "default",
+      baseUrl: typeof cfg.baseUrl === "string" ? resolveEnvVars(cfg.baseUrl).replace(/\/$/, "") : undefined,
+      requestTimeoutMs: typeof cfg.requestTimeoutMs === "number" ? cfg.requestTimeoutMs : 10000,
       orgId: typeof cfg.orgId === "string" ? cfg.orgId : undefined,
       projectId: typeof cfg.projectId === "string" ? cfg.projectId : undefined,
       autoCapture: cfg.autoCapture !== false,
@@ -585,6 +703,10 @@ function createProvider(
   cfg: Mem0Config,
   api: OpenClawPluginApi,
 ): Mem0Provider {
+  if (cfg.baseUrl) {
+    return new FoxmemoryHttpProvider(cfg.baseUrl, cfg.requestTimeoutMs);
+  }
+
   if (cfg.mode === "open-source") {
     return new OSSProvider(cfg.oss, cfg.customPrompt, (p) =>
       api.resolvePath(p),

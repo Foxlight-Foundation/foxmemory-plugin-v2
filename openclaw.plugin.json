@@ -10,7 +10,7 @@
       "label": "Mem0 API Key",
       "sensitive": true,
       "placeholder": "m0-...",
-      "help": "API key from app.mem0.ai (or use ${MEM0_API_KEY}). Only needed for platform mode."
+      "help": "API key from app.mem0.ai (or use ${MEM0_API_KEY}). Only needed for platform mode without baseUrl."
     },
     "userId": {
       "label": "Default User ID",
@@ -67,7 +67,17 @@
     "oss": {
       "label": "Open-Source Configuration",
       "advanced": true,
-      "help": "Optional. Configure custom embedder, vector store, LLM, or history DB for open-source mode. Has sensible defaults — only override what you need."
+      "help": "Optional. Configure custom embedder, vector store, LLM, or history DB for open-source mode. Has sensible defaults \u2014 only override what you need."
+    },
+    "baseUrl": {
+      "label": "FoxMemory Base URL",
+      "placeholder": "http://192.168.0.118:8082",
+      "help": "If set, plugin uses foxmemory HTTP v2 endpoints instead of Mem0 SDK providers."
+    },
+    "requestTimeoutMs": {
+      "label": "Request Timeout (ms)",
+      "placeholder": "10000",
+      "advanced": true
     }
   },
   "configSchema": {
@@ -161,6 +171,12 @@
             "type": "string"
           }
         }
+      },
+      "baseUrl": {
+        "type": "string"
+      },
+      "requestTimeoutMs": {
+        "type": "number"
       }
     },
     "required": []
