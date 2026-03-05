@@ -8,3 +8,4 @@
 6. Apply tolerant-reader parsing on v2 client responses: accept additive fields, require only stable core fields for behavior.
 
 Rationale: compatibility-first service evolution (consumer impact minimized) with deliberate migration gates.
+6. Add idempotency-key support for mutating `/v2` POST/PUT operations to make retries safe under network jitter.
