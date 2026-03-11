@@ -1,5 +1,5 @@
 {
-  "name": "@foxlight/foxmemory-plugin-v2",
+  "name": "@foxlight-foundation/foxmemory-plugin-v2",
   "version": "1.0.0",
   "description": "OpenClaw memory plugin backed by the FoxMemory HTTP v2 API (Qdrant + Neo4j)",
   "main": "dist/index.js",

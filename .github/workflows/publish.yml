@@ -1,4 +1,4 @@
-name: Publish to GitLab Registry
+name: Publish to GitHub Packages
 
 on:
   push:
@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -19,24 +20,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@foxlight-foundation"
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
       - name: Build
         run: yarn build
-
-      - name: Configure GitLab NPM registry
-        # GITLAB_REGISTRY_URL: your GitLab project-level or group-level registry endpoint
-        #   e.g. https://gitlab.com/api/v4/projects/<PROJECT_ID>/packages/npm/
-        #   or   https://gitlab.com/api/v4/groups/<GROUP_PATH>/packages/npm/
-        # GITLAB_TOKEN: a GitLab personal access token with api + write_package_registry scopes
-        #
-        # Set both as GitHub repository secrets before running this workflow.
-        run: |
-          echo "@foxlight:registry=${{ secrets.GITLAB_REGISTRY_URL }}" >> .npmrc
-          echo "${{ secrets.GITLAB_REGISTRY_URL }}:_authToken=${{ secrets.GITLAB_TOKEN }}" >> .npmrc
-          echo "always-auth=true" >> .npmrc
 
       - name: Set package version from tag
         run: |
@@ -45,3 +36,5 @@ jobs:
 
       - name: Publish
         run: yarn publish --access public --non-interactive
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
