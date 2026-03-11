@@ -6,6 +6,68 @@ This is the v2 successor to `foxmemory-openclaw-memory`. The primary change is t
 
 ---
 
+## Installation
+
+```bash
+openclaw plugins install @foxlight-foundation/foxmemory-plugin-v2
+```
+
+Pin to an exact version (recommended for production):
+
+```bash
+openclaw plugins install @foxlight-foundation/foxmemory-plugin-v2 --pin
+```
+
+---
+
+## Configuration
+
+### FoxMemory backend (recommended)
+
+Point the plugin at your self-hosted `foxmemory-store` instance:
+
+```json
+{
+  "baseUrl": "http://your-foxmemory-host:8082",
+  "userId": "your-user-id",
+  "autoCapture": true,
+  "autoRecall": true
+}
+```
+
+### Mem0 platform (cloud)
+
+Use Mem0's managed cloud platform instead:
+
+```json
+{
+  "mode": "platform",
+  "apiKey": "${MEM0_API_KEY}",
+  "userId": "your-user-id"
+}
+```
+
+`${MEM0_API_KEY}` will be resolved from the environment variable of that name if set.
+
+### Mem0 open-source (self-hosted SDK)
+
+Run Mem0 OSS directly without `foxmemory-store`:
+
+```json
+{
+  "mode": "open-source",
+  "userId": "your-user-id",
+  "oss": {
+    "vectorStore": {
+      "provider": "qdrant",
+      "config": { "host": "localhost", "port": 6333 }
+    }
+  }
+}
+```
+
+---
+
 ## What it does
 
 The plugin registers five tools with OpenClaw that the resident AI (or any agent) can call:
@@ -20,8 +82,8 @@ The plugin registers five tools with OpenClaw that the resident AI (or any agent
 
 Two automatic behaviors wrap each agent turn:
 
-- **Auto-recall** — before a turn, retrieves relevant memories from both session and long-term scopes and injects them into the agent's context so Kite "remembers"
-- **Auto-capture** — after a turn, extracts and stores key facts from the conversation so Kite "learns"
+- **Auto-recall** — before a turn, retrieves relevant memories from both session and long-term scopes and injects them into the agent's context so your foxlight fox "remembers"
+- **Auto-capture** — after a turn, extracts and stores key facts from the conversation so your foxlight fox "learns"
 
 ---
 
@@ -61,9 +123,9 @@ If `baseUrl` is not set, the plugin falls back to the upstream Mem0 SDK (platfor
 
 ---
 
-## Configuration
+## Configuration reference
 
-Configure via OpenClaw's plugin settings UI or directly in your OpenClaw config.
+Full list of available options:
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
