@@ -71,7 +71,7 @@
     },
     "baseUrl": {
       "label": "FoxMemory Base URL",
-      "placeholder": "http://192.168.0.118:8082",
+      "placeholder": "http://your-foxmemory-host:8082",
       "help": "If set, plugin uses foxmemory HTTP v2 endpoints instead of Mem0 SDK providers."
     },
     "requestTimeoutMs": {

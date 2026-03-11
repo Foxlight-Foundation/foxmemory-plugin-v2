@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.yarn/
+.pnp.*
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Lock files (keep package-lock.json if using npm, otherwise ignore)
+package-lock.json
+
+# Internal planning docs
+API_V2_GAP_AUDIT.md
+CORE_MEMORY_OPS_COVERAGE.md
+IMPLEMENTATION_BACKLOG.md
+MEM0_CORE_OPS_COVERAGE.md
+PROVIDER_API_MAPPING.md
+SCOPE_ISOLATION_FIX_PLAN.md
+SCOPE_ISOLATION_TEST_PLAN.md
+V2_ROLLOUT_PRINCIPLES.md
