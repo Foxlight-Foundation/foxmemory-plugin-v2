@@ -16,6 +16,7 @@
 
 import { Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import { stripOpenclawFraming } from "./strip-openclaw-framing";
 
 // ============================================================================
 // Types
@@ -946,9 +947,20 @@ const memoryPlugin = {
           };
 
           try {
+            // Strip any OpenClaw/FoxClaw framing that may have been quoted or
+            // copied into the explicit store text (metadata blocks, timestamps,
+            // directive tags). See strip-openclaw-framing.ts for details.
+            const cleanedText = stripOpenclawFraming(text);
+            if (!cleanedText) {
+              return {
+                content: [{ type: "text", text: "Nothing to store after stripping operational framing." }],
+                details: { action: "skipped" },
+              };
+            }
+
             const runId = !longTerm && currentSessionId ? currentSessionId : undefined;
             const result = await provider.add(
-              [{ role: "user", content: text }],
+              [{ role: "user", content: cleanedText }],
               buildAddOptions(userId, runId),
             );
 
@@ -1478,6 +1490,14 @@ const memoryPlugin = {
               textContent = textContent.replace(/<relevant-memories>[\s\S]*?<\/relevant-memories>\s*/g, "").trim();
               if (!textContent) continue;
             }
+
+            // Strip OpenClaw/FoxClaw operational framing: inbound metadata blocks
+            // (Sender, Conversation info, etc.), timestamp prefixes, and inline
+            // directive tags ([[reply_to_current]], [[audio_as_voice]]). These are
+            // gateway routing artifacts, not semantic content — if they leak into
+            // memory extraction the LLM stores them as "facts."
+            textContent = stripOpenclawFraming(textContent);
+            if (!textContent) continue;
 
             formattedMessages.push({
               role: role as string,

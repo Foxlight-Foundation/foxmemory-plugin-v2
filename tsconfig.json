@@ -15,6 +15,6 @@
     "sourceMap": true,
     "typeRoots": ["./typings", "./node_modules/@types"]
   },
-  "include": ["index.ts", "typings/**/*.d.ts"],
+  "include": ["index.ts", "strip-openclaw-framing.ts", "typings/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
