@@ -1,0 +1,28 @@
+# Source files (dist/ is the published artifact)
+*.ts
+!*.d.ts
+tsconfig.json
+.github/
+.claude/
+
+# Dev/docs
+*.test.*
+*.spec.*
+API_V2_GAP_AUDIT.md
+CORE_MEMORY_OPS_COVERAGE.md
+IMPLEMENTATION_BACKLOG.md
+MEM0_CORE_OPS_COVERAGE.md
+PROVIDER_API_MAPPING.md
+SCOPE_ISOLATION_FIX_PLAN.md
+SCOPE_ISOLATION_TEST_PLAN.md
+V2_ROLLOUT_PRINCIPLES.md
+
+# OS/IDE
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
