@@ -174,8 +174,13 @@ const stripTimestampPrefix = (text: string): string =>
  */
 const DIRECTIVE_TAG_RE = /\[\[\s*(?:reply_to_current|reply_to\s*:\s*[^\]\n]+|audio_as_voice)\s*\]\]/gi;
 
-const stripDirectiveTags = (text: string): string =>
-  text.replace(DIRECTIVE_TAG_RE, "").replace(/\s{2,}/g, " ").trim();
+const stripDirectiveTags = (text: string): string => {
+  const stripped = text.replace(DIRECTIVE_TAG_RE, "");
+  // Only clean up residual whitespace if a tag was actually removed.
+  // Unconditional \s{2,} collapsing would destroy legitimate paragraph breaks.
+  if (stripped === text) return text;
+  return stripped.replace(/\s{2,}/g, " ").trim();
+};
 
 // ---------------------------------------------------------------------------
 // Public API

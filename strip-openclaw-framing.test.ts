@@ -152,6 +152,11 @@ describe("stripOpenclawFraming", () => {
     assert.equal(stripOpenclawFraming(input), input);
   });
 
+  it("preserves paragraph breaks in text without directive tags", () => {
+    const input = "First paragraph\n\nSecond paragraph\n\nThird paragraph";
+    assert.equal(stripOpenclawFraming(input), input);
+  });
+
   it("returns empty string when entire content is metadata", () => {
     const input = [
       "Sender (untrusted metadata):",
