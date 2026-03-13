@@ -184,7 +184,6 @@ class FoxmemoryHttpProvider implements Mem0Provider {
       messages,
       metadata: undefined,
       infer_preferred: true,
-      fallback_raw: true,
     });
     const result = json?.data?.result || json?.result || { results: [] };
     return normalizeAddResult(result);
